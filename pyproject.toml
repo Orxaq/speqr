@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "speqr"
-version = "0.0.1"
+version = "0.1.0"
 description = "How you declare what your code should do"
 readme = "README.md"
 license = "MIT"
