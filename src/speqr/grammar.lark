@@ -19,7 +19,9 @@ postcondition:    "postcondition" expression NEWLINE
 causal_assertion: "causal assertion" NEWLINE "if" NAME direction "by" NUMBER NEWLINE "then" NAME direction "by" NUMBER NEWLINE
 spec_ref:         "references" NAME NEWLINE
 
-direction: "increases" | "decreases"
+INCREASES: "increases"
+DECREASES: "decreases"
+direction: INCREASES | DECREASES
 
 type: "Int"    -> int_type
     | "Real"   -> real_type
