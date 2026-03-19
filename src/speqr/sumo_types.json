@@ -1,0 +1,9 @@
+{
+  "INT":    { "sumo": "Integer",        "sumo_parent": "Number" },
+  "REAL":   { "sumo": "RealNumber",     "sumo_parent": "Number" },
+  "BOOL":   { "sumo": "TruthValue",     "sumo_parent": "Attribute" },
+  "STRING": { "sumo": "SymbolicString", "sumo_parent": "SymbolicItem" },
+  "LIST":   { "sumo": "List",           "sumo_parent": "Collection" },
+  "SET":    { "sumo": "SpeqrSet",       "sumo_parent": "Collection" },
+  "MAP":    { "sumo": "SpeqrMap",       "sumo_parent": "Collection" }
+}
