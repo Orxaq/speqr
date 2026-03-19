@@ -1,0 +1,39 @@
+// grammar.lark — Speqr PEG grammar
+// Uses Lark's Earley parser for maximum clarity; switch to LALR(1) in v0.2.0.
+
+start: spec+
+
+spec: "spec" NAME NEWLINE spec_body* "end" NEWLINE?
+
+spec_body: input_decl
+         | output_decl
+         | precondition
+         | postcondition
+         | causal_assertion
+         | spec_ref
+
+input_decl:       "input"       NAME ":" type NEWLINE
+output_decl:      "output"      NAME ":" type NEWLINE
+precondition:     "precondition" expression NEWLINE
+postcondition:    "postcondition" expression NEWLINE
+causal_assertion: "causal assertion" NEWLINE "if" NAME direction "by" NUMBER NEWLINE "then" NAME direction "by" NUMBER NEWLINE
+spec_ref:         "references" NAME NEWLINE
+
+direction: "increases" | "decreases"
+
+type: "Int"    -> int_type
+    | "Real"   -> real_type
+    | "Bool"   -> bool_type
+    | "String" -> string_type
+    | "List" "[" type "]" -> list_type
+    | "Set"  "[" type "]" -> set_type
+    | "Map"  "[" type "," type "]" -> map_type
+
+expression: /[^\n]+/
+
+%import common.CNAME -> NAME
+%import common.NUMBER
+%import common.NEWLINE
+%import common.WS_INLINE
+%ignore WS_INLINE
+%ignore /\r/
