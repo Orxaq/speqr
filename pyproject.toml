@@ -6,6 +6,9 @@ build-backend = "hatchling.build"
 name = "speqr"
 version = "0.0.1"
 description = "How you declare what your code should do"
+readme = "README.md"
+license = "MIT"
+authors = [{name = "Steven Devisch"}]
 requires-python = ">=3.12"
 dependencies = [
     "lark>=1.2.0",
@@ -13,10 +16,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "pytest-cov", "ruff"]
+dev = ["pytest>=8.0", "pytest-cov", "ruff>=0.15.1"]
 
 [project.scripts]
 speqr = "speqr.cli:app"
+
+[project.urls]
+Repository = "https://github.com/Orxaq/speqr"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -24,3 +30,6 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 88
 target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
