@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "speqr"
+version = "0.1.0"
+description = "Define, validate, and certify OPC contracts for your code"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+authors = [
+    { name = "Steven Devisch" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
+]
+dependencies = [
+    "pydantic>=2.0",
+    "pyyaml>=6.0",
+    "httpx>=0.27",
+    "click>=8.0",
+]
+
+[project.scripts]
+speqr = "speqr.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Orxaq/speqr"
+Documentation = "https://github.com/Orxaq/speqr"
+Repository = "https://github.com/Orxaq/speqr"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/speqr"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
