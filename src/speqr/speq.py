@@ -19,18 +19,21 @@ class Speq(BaseModel):
     contracts: list[OPCContract] = []
 
     def add(self, contract: OPCContract) -> Speq:
+        """Add a contract to the collection, returning a new Speq."""
         existing = {c.name for c in self.contracts}
         if contract.name in existing:
             raise ValueError(f"duplicate contract name: {contract.name!r}")
         return self.model_copy(update={"contracts": [*self.contracts, contract]})
 
     def get(self, name: str) -> OPCContract | None:
+        """Look up a contract by name, returning None if not found."""
         for c in self.contracts:
             if c.name == name:
                 return c
         return None
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the speq to a plain dictionary."""
         return {
             "name": self.name,
             "version": self.version,
@@ -39,6 +42,7 @@ class Speq(BaseModel):
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> Speq:
+        """Deserialize a speq from a plain dictionary."""
         contracts = [OPCContract.from_dict(c) for c in d.get("contracts", [])]
         return cls(name=d["name"], version=d.get("version", "0.1.0"), contracts=contracts)
 
