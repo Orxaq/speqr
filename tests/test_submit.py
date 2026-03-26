@@ -72,3 +72,16 @@ class TestSubmit:
         speq = _make_speq()
         with pytest.raises(ValueError, match="endpoint"):
             submit(speq, endpoint="")
+
+    def test_submit_validation_failure(self):
+        roles = {r: r.value for r in CaseRole}
+        roles[CaseRole.AGENT] = ""
+        c = OPCContract(
+            name="bad",
+            target="mod.bad",
+            roles=roles,
+            conditions=HoareCondition(preconditions=["valid"], postconditions=["done"]),
+        )
+        speq = Speq(name="test_system", version="1.0.0", contracts=[c])
+        with pytest.raises(ValueError, match="local validation"):
+            submit(speq, endpoint="https://verify.example.com/certify")

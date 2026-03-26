@@ -30,6 +30,30 @@ class TestGuaranteeLevel:
         assert GuaranteeLevel.PROVEN > GuaranteeLevel.TESTED
         assert GuaranteeLevel.TESTED < GuaranteeLevel.VERIFIED
 
+    def test_ge_comparison(self):
+        assert GuaranteeLevel.PROVEN >= GuaranteeLevel.TESTED
+        assert GuaranteeLevel.TESTED >= GuaranteeLevel.TESTED
+
+    def test_le_comparison(self):
+        assert GuaranteeLevel.TESTED <= GuaranteeLevel.PROVEN
+        assert GuaranteeLevel.TESTED <= GuaranteeLevel.TESTED
+
+    def test_gt_returns_not_implemented(self):
+        result = GuaranteeLevel.PROVEN.__gt__(42)
+        assert result is NotImplemented
+
+    def test_lt_returns_not_implemented(self):
+        result = GuaranteeLevel.TESTED.__lt__(42)
+        assert result is NotImplemented
+
+    def test_ge_returns_not_implemented(self):
+        result = GuaranteeLevel.PROVEN.__ge__("not_an_enum")
+        assert result is NotImplemented
+
+    def test_le_returns_not_implemented(self):
+        result = GuaranteeLevel.TESTED.__le__("not_an_enum")
+        assert result is NotImplemented
+
 
 class TestHoareCondition:
     def test_string_conditions(self):

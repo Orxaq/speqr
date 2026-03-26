@@ -43,6 +43,15 @@ contracts:
 
 
 class TestLoadSpeqString:
+    def test_non_dict_yaml_raises(self):
+        with pytest.raises(ValueError, match="mapping"):
+            load_speq_string("- item1\n- item2")
+
+    def test_yaml_parse_error_raises(self):
+        # A tab character in a YAML value position causes a parse error
+        with pytest.raises(ValueError, match="invalid YAML"):
+            load_speq_string("key: [\nunclosed bracket")
+
     def test_loads_valid_yaml(self):
         speq = load_speq_string(VALID_YAML)
         assert speq.name == "my_system"

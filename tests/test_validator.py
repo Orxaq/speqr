@@ -78,3 +78,37 @@ class TestValidate:
         speq = _make_speq(c)
         result = validate(speq)
         assert not result.passed
+
+    def test_empty_target_errors(self):
+        roles = {r: r.value for r in CaseRole}
+        # model_construct bypasses pydantic validators so we can set target=""
+        c = OPCContract.model_construct(
+            name="no_target",
+            target="",
+            roles=roles,
+            conditions=HoareCondition(preconditions=["valid"], postconditions=["done"]),
+            guarantee_target=None,
+            version="1",
+            tags=[],
+        )
+        speq = Speq.model_construct(name="test_system", version="1.0.0", contracts=[c])
+        result = validate(speq)
+        assert not result.passed
+        assert any("target is empty" in e for e in result.errors)
+
+    def test_no_conditions_errors(self):
+        roles = {r: r.value for r in CaseRole}
+        # model_construct bypasses pydantic validators so we can have empty conditions
+        c = OPCContract.model_construct(
+            name="no_cond",
+            target="mod.no_cond",
+            roles=roles,
+            conditions=HoareCondition(preconditions=[], postconditions=[]),
+            guarantee_target=None,
+            version="1",
+            tags=[],
+        )
+        speq = Speq.model_construct(name="test_system", version="1.0.0", contracts=[c])
+        result = validate(speq)
+        assert not result.passed
+        assert any("no preconditions or postconditions" in e for e in result.errors)
