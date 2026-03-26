@@ -22,6 +22,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Typing :: Typed",
 ]
+keywords = ["opc", "contracts", "verification", "specification", "validation", "certification"]
 dependencies = [
     "pydantic>=2.0",
     "pyyaml>=6.0",
@@ -36,6 +37,7 @@ speqr = "speqr.cli:main"
 Homepage = "https://github.com/Orxaq/speqr"
 Documentation = "https://github.com/Orxaq/speqr"
 Repository = "https://github.com/Orxaq/speqr"
+"Bug Tracker" = "https://github.com/Orxaq/speqr/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/speqr"]
