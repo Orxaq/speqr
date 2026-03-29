@@ -10,6 +10,21 @@ speqr is a Python package for defining and validating **OPC (Obligation-Protocol
 
 speqr is **protocol-only**: it does not enforce contracts at runtime or modify function behavior.
 
+## Why Speqr?
+
+Modern software development lacks a standard way to declare and verify the semantic obligations of code. Type systems tell us *what* data flows through functions, but they don't tell us *why* the function exists, *who* or *what* participates in the operation, or *what guarantees* the function makes about its behavior.
+
+**Speqr doesn't validate your code — it validates your intent.** It provides a structured way to declare what you *mean* your code to do, who participates, and what promises you're making. This makes speqr ideal as a **code companion**: write the contract first to clarify your thinking, then write code that fulfills it.
+
+Speqr addresses this by:
+
+- **Making obligations explicit** — By using linguistic case roles (AGENT, PATIENT, INSTRUMENT, etc.), speqr forces you to identify every participant in an operation, clarifying not just types but *semantic intent*.
+- **Recording guarantees** — Hoare conditions (pre/post/invariants) and GuaranteeLevels document the strength of your claims, from "we have tests" to "this is formally proven."
+- **Enabling certification** — Because contracts are protocol-level and serializable, they can be submitted to external auditors, analyzed by static tools, or checked against organizational standards without coupling to any particular runtime or enforcement mechanism.
+- **Staying out of the way** — Speqr is not a runtime contract framework. It doesn't slow down your code or change how it executes. It's pure metadata for tooling, humans, and certification systems.
+
+Use speqr when you need a **shared language for software obligations** — whether you're documenting critical code, preparing for an audit, building safety-critical systems, or just want a disciplined way to reason about what your functions promise.
+
 ## Install
 
 ```bash
@@ -17,6 +32,147 @@ pip install speqr
 ```
 
 Requires Python 3.10+.
+
+## Complete Example: Using Speqr as a Code Companion
+
+Here's a full workflow showing how to use speqr to clarify intent *before* writing implementation code.
+
+### Step 1: Define the contract (intent)
+
+```python
+# user_service.py
+from speqr import contract, GuaranteeLevel
+
+@contract(
+    name="create_user",
+    pre="email is valid format and not already registered",
+    post="user record exists in database with confirmed=False",
+    invariants=["user_id is unique", "email is lowercase"],
+    agent="user_service",
+    patient="user_data",
+    instrument="database_connection",
+    result="user_record",
+    source="registration_request",
+    destination="user_database",
+    experiencer="new_user",
+    guarantee_target=GuaranteeLevel.TESTED,
+)
+def create_user(email: str, password: str) -> dict:
+    """Create a new user account."""
+    pass  # Intent is clear; now implement
+```
+
+### Step 2: Validate the contract structure
+
+```bash
+# Validate that the contract is well-formed
+speqr validate user_service.py
+```
+
+Or programmatically:
+
+```python
+from speqr import validate, load_speq_file
+
+# Load contracts from decorated functions
+# (In practice, you'd extract contracts from your module)
+result = validate(your_speq_object)
+if not result.passed:
+    print("Contract errors:", result.errors)
+```
+
+### Step 3: Implement the code
+
+```python
+@contract(
+    name="create_user",
+    pre="email is valid format and not already registered",
+    post="user record exists in database with confirmed=False",
+    invariants=["user_id is unique", "email is lowercase"],
+    agent="user_service",
+    patient="user_data",
+    instrument="database_connection",
+    result="user_record",
+    source="registration_request",
+    destination="user_database",
+    experiencer="new_user",
+    guarantee_target=GuaranteeLevel.TESTED,
+)
+def create_user(email: str, password: str) -> dict:
+    """Create a new user account."""
+    import uuid
+    import hashlib
+    
+    # Validate precondition
+    email = email.lower()
+    if not _is_valid_email(email):
+        raise ValueError("Invalid email format")
+    if _email_exists(email):
+        raise ValueError("Email already registered")
+    
+    # Execute operation
+    user_id = str(uuid.uuid4())
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    
+    user_record = {
+        "id": user_id,
+        "email": email,
+        "password_hash": password_hash,
+        "confirmed": False,
+    }
+    
+    # Store to destination
+    _save_to_database(user_record)
+    
+    # Postcondition is satisfied
+    return user_record
+```
+
+### Step 4: Write tests aligned with your contract
+
+```python
+# test_user_service.py
+import pytest
+from user_service import create_user
+
+def test_create_user_valid_email():
+    """Verify precondition: email must be valid"""
+    with pytest.raises(ValueError, match="Invalid email format"):
+        create_user("not-an-email", "password123")
+
+def test_create_user_duplicate_email():
+    """Verify precondition: email must not be registered"""
+    create_user("user@example.com", "password123")
+    with pytest.raises(ValueError, match="Email already registered"):
+        create_user("user@example.com", "password456")
+
+def test_create_user_postcondition():
+    """Verify postcondition: user exists with confirmed=False"""
+    result = create_user("new@example.com", "password123")
+    assert result["confirmed"] is False
+    assert "id" in result
+    assert result["email"] == "new@example.com"
+
+def test_create_user_invariant_lowercase():
+    """Verify invariant: email is lowercase"""
+    result = create_user("USER@EXAMPLE.COM", "password123")
+    assert result["email"] == "user@example.com"
+
+def test_create_user_invariant_unique_id():
+    """Verify invariant: user_id is unique"""
+    user1 = create_user("user1@example.com", "pass1")
+    user2 = create_user("user2@example.com", "pass2")
+    assert user1["id"] != user2["id"]
+```
+
+### What Just Happened?
+
+1. **Contract first** — You declared *what* the function should do before *how*.
+2. **Validation** — Speqr confirmed the contract structure is valid (all roles present, conditions specified).
+3. **Implementation** — You wrote code to fulfill the obligations.
+4. **Testing** — Tests verify the contract claims, justifying the `TESTED` guarantee level.
+
+The contract didn't validate your implementation — it validated that you knew what you were trying to build. Your tests validated the implementation against the contract.
 
 ## Quick Start: Inline Mode
 
@@ -51,7 +207,7 @@ Define contracts in a `.speq.yaml` file, separate from your source code.
 
 ```yaml
 # contracts.speq.yaml
-speq: payment_contracts
+name: payment_contracts
 version: "1.0"
 contracts:
   - name: transfer_funds
@@ -78,8 +234,12 @@ contracts:
     roles:
       agent: validation_service
       patient: account_id
+      instrument: lookup_query
       result: is_valid
       source: account_registry
+      destination: caller
+      experiencer: account_holder
+    guarantee_target: TESTED
 ```
 
 Load and validate programmatically:
@@ -89,7 +249,7 @@ from speqr import load_speq_file, validate
 
 speq = load_speq_file("contracts.speq.yaml")
 result = validate(speq)
-print(result.valid, result.errors)
+print(result.passed, result.errors)
 ```
 
 ## CLI
@@ -175,7 +335,7 @@ from speqr import (
 
 **`contract(**kwargs)`** — Decorator. Attaches a contract to a function. No runtime effect.
 
-**`validate(speq: Speq) -> ValidationResult`** — Validates a Speq object. Returns `ValidationResult` with `.valid: bool` and `.errors: list[str]`.
+**`validate(speq: Speq) -> ValidationResult`** — Validates a Speq object. Returns `ValidationResult` with `.passed: bool` and `.errors: list[str]`.
 
 **`load_speq_file(path: str | Path) -> Speq`** — Parses a `.speq.yaml` file and returns a `Speq`.
 
@@ -195,7 +355,7 @@ from speqr import (
 - CLI: `speqr validate`
 - CLI: `speqr submit`
 - All 7 CaseRoles, 4 GuaranteeLevels, Hoare conditions
-- 51 tests, 88% coverage
+- 67 tests, 99% coverage
 
 ### Planned
 

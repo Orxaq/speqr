@@ -38,12 +38,11 @@ class TestSubmit:
         mock_response.json.return_value = {"passed": True, "findings": []}
         mock_response.raise_for_status = MagicMock()
 
-        with patch("speqr.submit.httpx") as mock_httpx:
-            mock_httpx.post.return_value = mock_response
+        with patch("speqr.submit.httpx.post", return_value=mock_response) as mock_post:
             result = submit(speq, endpoint="https://verify.example.com/certify")
 
         assert result.passed
-        mock_httpx.post.assert_called_once()
+        mock_post.assert_called_once()
 
     def test_submit_failure_result(self):
         speq = _make_speq()
@@ -55,16 +54,14 @@ class TestSubmit:
         }
         mock_response.raise_for_status = MagicMock()
 
-        with patch("speqr.submit.httpx") as mock_httpx:
-            mock_httpx.post.return_value = mock_response
+        with patch("speqr.submit.httpx.post", return_value=mock_response):
             result = submit(speq, endpoint="https://verify.example.com/certify")
 
         assert not result.passed
 
     def test_submit_connection_error(self):
         speq = _make_speq()
-        with patch("speqr.submit.httpx") as mock_httpx:
-            mock_httpx.post.side_effect = Exception("connection refused")
+        with patch("speqr.submit.httpx.post", side_effect=OSError("connection refused")):
             with pytest.raises(SpeqrSubmitError, match="connection"):
                 submit(speq, endpoint="https://verify.example.com/certify")
 
@@ -72,6 +69,16 @@ class TestSubmit:
         speq = _make_speq()
         with pytest.raises(ValueError, match="endpoint"):
             submit(speq, endpoint="")
+
+    def test_submit_rejects_non_http_endpoint(self):
+        speq = _make_speq()
+        with pytest.raises(ValueError, match="http://"):
+            submit(speq, endpoint="ftp://example.com/certify")
+
+    def test_submit_rejects_file_endpoint(self):
+        speq = _make_speq()
+        with pytest.raises(ValueError, match="http://"):
+            submit(speq, endpoint="/etc/passwd")
 
     def test_submit_validation_failure(self):
         roles = {r: r.value for r in CaseRole}

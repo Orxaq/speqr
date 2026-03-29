@@ -33,6 +33,8 @@ def submit(
     """Submit a speq to a certification endpoint."""
     if not endpoint or not endpoint.strip():
         raise ValueError("endpoint URL is required")
+    if not endpoint.strip().startswith(("http://", "https://")):
+        raise ValueError("endpoint must be an http:// or https:// URL")
 
     local_result = validate(speq)
     if not local_result.passed:
@@ -51,7 +53,7 @@ def submit(
         )
         response.raise_for_status()
         data = response.json()
-    except Exception as e:
+    except (httpx.HTTPError, OSError, ValueError) as e:
         raise SpeqrSubmitError(f"submission failed: {e}") from e
 
     return SubmitResult(

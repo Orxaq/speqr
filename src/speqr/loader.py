@@ -8,7 +8,7 @@ import yaml
 
 from speqr.contract import OPCContract
 from speqr.speq import Speq
-from speqr.types import CaseRole, HoareCondition
+from speqr.types import CaseRole, GuaranteeLevel, HoareCondition
 
 
 def load_speq_string(content: str) -> Speq:
@@ -34,12 +34,25 @@ def load_speq_string(content: str) -> Speq:
             postconditions=[post] if isinstance(post, str) and post else post if isinstance(post, list) else [],
             invariants=[invariants] if isinstance(invariants, str) and invariants else invariants if isinstance(invariants, list) else [],
         )
+        gt_raw = raw.get("guarantee_target")
+        if gt_raw is not None:
+            gt_match = next(
+                (g for g in GuaranteeLevel if g.label == gt_raw.lower()),
+                None,
+            )
+            if gt_match is None:
+                raise ValueError(f"unknown guarantee_target: {gt_raw}")
+            guarantee_target = gt_match
+        else:
+            guarantee_target = GuaranteeLevel.TESTED
+
         contracts.append(
             OPCContract(
                 name=raw["name"],
                 target=raw["target"],
                 roles=roles,
                 conditions=conditions,
+                guarantee_target=guarantee_target,
                 version=raw.get("version", "1"),
                 tags=raw.get("tags", []),
             )

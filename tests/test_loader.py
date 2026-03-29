@@ -3,7 +3,7 @@
 import pytest
 from pathlib import Path
 from speqr.loader import load_speq_file, load_speq_string
-from speqr.types import CaseRole
+from speqr.types import CaseRole, GuaranteeLevel
 
 
 VALID_YAML = """
@@ -91,3 +91,51 @@ class TestLoadSpeqFile:
         f.write_text("contracts: []")
         with pytest.raises(ValueError, match="name"):
             load_speq_file(f)
+
+
+class TestLoaderGuaranteeTarget:
+    def test_guarantee_target_parsed(self):
+        yaml_str = """
+name: gt_test
+contracts:
+  - name: check
+    target: mod.check
+    pre: "x > 0"
+    post: "result is bool"
+    guarantee_target: VERIFIED
+    roles:
+      agent: checker
+      patient: input
+      instrument: logic
+      result: output
+      source: data
+      destination: store
+      experiencer: user
+"""
+        speq = load_speq_string(yaml_str)
+        assert speq.contracts[0].guarantee_target == GuaranteeLevel.VERIFIED
+
+    def test_guarantee_target_defaults_to_tested(self):
+        speq = load_speq_string(MINIMAL_YAML)
+        assert speq.contracts[0].guarantee_target == GuaranteeLevel.TESTED
+
+    def test_unknown_guarantee_target_raises(self):
+        yaml_str = """
+name: bad_gt
+contracts:
+  - name: check
+    target: mod.check
+    pre: "x > 0"
+    post: "result is bool"
+    guarantee_target: IMAGINARY
+    roles:
+      agent: checker
+      patient: input
+      instrument: logic
+      result: output
+      source: data
+      destination: store
+      experiencer: user
+"""
+        with pytest.raises(ValueError, match="unknown guarantee_target"):
+            load_speq_string(yaml_str)
